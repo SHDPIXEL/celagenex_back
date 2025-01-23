@@ -3,7 +3,7 @@ require('dotenv').config();
 
 // Create a queue
 const connection = {
-    host: '127.0.0.1',
+    host: 'clustercfg.celagenex-redis.bbhsdn.aps1.cache.amazonaws.com',
     port: 6379, // Replace with Redis details if needed
 };
 
