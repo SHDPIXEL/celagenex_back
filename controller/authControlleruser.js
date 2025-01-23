@@ -89,135 +89,135 @@ async function verifyUserToken(req, res, next) {
 
 async function formSubmit(req, res) {
   try {
-    const user = req.user_logged;
-    // Extract form data from request body
-    const { name, speciality, hospital, city } = req.body;
-    const imageFile = req.files?.image; // Assuming the frontend sends an image file with `image` key
-    const videoFile = req.files?.video; // Assuming the frontend sends a video file with `video` key
+    // const user = req.user_logged;
+    // // Extract form data from request body
+    // const { name, speciality, hospital, city } = req.body;
+    // const imageFile = req.files?.image; // Assuming the frontend sends an image file with `image` key
+    // const videoFile = req.files?.video; // Assuming the frontend sends a video file with `video` key
 
-    // Validate required fields
-    if (!speciality || !hospital || !city) {
-      return res
-        .status(400)
-        .json({ error: "Speciality, hospital, and city are required fields." });
-    }
+    // // Validate required fields
+    // if (!speciality || !hospital || !city) {
+    //   return res
+    //     .status(400)
+    //     .json({ error: "Speciality, hospital, and city are required fields." });
+    // }
 
-    let imagePath = null;
-    let videoPath = null;
+    // let imagePath = null;
+    // let videoPath = null;
 
-    // Save image to folder and validate
-    if (imageFile) {
-      const allowedImageTypes = ["image/jpeg", "image/png"];
-      if (!allowedImageTypes.includes(imageFile.mimetype)) {
-        return res
-          .status(400)
-          .json({ error: "Image must be in JPEG or PNG format." });
-      }
+    // // Save image to folder and validate
+    // if (imageFile) {
+    //   const allowedImageTypes = ["image/jpeg", "image/png"];
+    //   if (!allowedImageTypes.includes(imageFile.mimetype)) {
+    //     return res
+    //       .status(400)
+    //       .json({ error: "Image must be in JPEG or PNG format." });
+    //   }
 
-      const imageDir = path.join(__dirname, "../uploads/images");
-      if (!fs.existsSync(imageDir)) {
-        fs.mkdirSync(imageDir, { recursive: true }); // Ensure directory exists
-      }
+    //   const imageDir = path.join(__dirname, "../uploads/images");
+    //   if (!fs.existsSync(imageDir)) {
+    //     fs.mkdirSync(imageDir, { recursive: true }); // Ensure directory exists
+    //   }
 
-      const imageFileName = `image_${Date.now()}_${user.id}.jpg`;
-      imagePath = path.join(imageDir, imageFileName);
-      await sharp(imageFile.data).toFile(imagePath); // Save image to folder
-      imagePath = `/uploads/images/${imageFileName}`; // Relative path for storing in DB
-    }
+    //   const imageFileName = `image_${Date.now()}_${user.id}.jpg`;
+    //   imagePath = path.join(imageDir, imageFileName);
+    //   await sharp(imageFile.data).toFile(imagePath); // Save image to folder
+    //   imagePath = `/uploads/images/${imageFileName}`; // Relative path for storing in DB
+    // }
 
-    // Save video to folder and validate
-    if (videoFile) {
-      const allowedVideoTypes = ["video/mp4"];
-      if (!allowedVideoTypes.includes(videoFile.mimetype)) {
-        return res.status(400).json({ error: "Video must be in MP4 format." });
-      }
+    // // Save video to folder and validate
+    // if (videoFile) {
+    //   const allowedVideoTypes = ["video/mp4"];
+    //   if (!allowedVideoTypes.includes(videoFile.mimetype)) {
+    //     return res.status(400).json({ error: "Video must be in MP4 format." });
+    //   }
 
-      const videoDir = path.join(__dirname, "../uploads/videos");
-      if (!fs.existsSync(videoDir)) {
-        fs.mkdirSync(videoDir, { recursive: true }); // Ensure directory exists
-      }
+    //   const videoDir = path.join(__dirname, "../uploads/videos");
+    //   if (!fs.existsSync(videoDir)) {
+    //     fs.mkdirSync(videoDir, { recursive: true }); // Ensure directory exists
+    //   }
 
-      const videoFileName = `video_${Date.now()}_${user.id}.mp4`;
-      videoPath = path.join(videoDir, videoFileName);
-      fs.writeFileSync(videoPath, videoFile.data); // Save video to folder
+    //   const videoFileName = `video_${Date.now()}_${user.id}.mp4`;
+    //   videoPath = path.join(videoDir, videoFileName);
+    //   fs.writeFileSync(videoPath, videoFile.data); // Save video to folder
 
-      // Validate video properties (size, duration, aspect ratio)
-      await new Promise((resolve, reject) => {
-        videoMeta.ffprobe(videoPath, (err, metadata) => {
-          if (err) {
-            console.error("Error while running ffprobe:", err);
-            return;
-          }
+    //   // Validate video properties (size, duration, aspect ratio)
+    //   await new Promise((resolve, reject) => {
+    //     videoMeta.ffprobe(videoPath, (err, metadata) => {
+    //       if (err) {
+    //         console.error("Error while running ffprobe:", err);
+    //         return;
+    //       }
 
-          const { duration, size } = metadata.format;
-          const streams = metadata.streams || [];
-          const videoStream = streams.find((s) => s.codec_type === "video");
+    //       const { duration, size } = metadata.format;
+    //       const streams = metadata.streams || [];
+    //       const videoStream = streams.find((s) => s.codec_type === "video");
 
-          // Check size
-          if (size > 100 * 1024 * 1024) {
-            return reject(
-              new Error("Video exceeds the maximum size of 100MB.")
-            );
-          }
+    //       // Check size
+    //       if (size > 100 * 1024 * 1024) {
+    //         return reject(
+    //           new Error("Video exceeds the maximum size of 100MB.")
+    //         );
+    //       }
 
-          // Check duration
-          if (duration > 60) {
-            return reject(
-              new Error("Video exceeds the maximum duration of 60 seconds.")
-            );
-          }
+    //       // Check duration
+    //       if (duration > 60) {
+    //         return reject(
+    //           new Error("Video exceeds the maximum duration of 60 seconds.")
+    //         );
+    //       }
 
-          // Check aspect ratio (16:9)
-          if (videoStream) {
-            const { width, height } = videoStream;
-            const ratio = width / height;
-            if (Math.abs(ratio - 16 / 9) > 0.01) {
-              return reject(
-                new Error("Video must have an aspect ratio of 16:9.")
-              );
-            }
-          }
+    //       // Check aspect ratio (16:9)
+    //       if (videoStream) {
+    //         const { width, height } = videoStream;
+    //         const ratio = width / height;
+    //         if (Math.abs(ratio - 16 / 9) > 0.01) {
+    //           return reject(
+    //             new Error("Video must have an aspect ratio of 16:9.")
+    //           );
+    //         }
+    //       }
 
-          resolve();
-        });
-      });
+    //       resolve();
+    //     });
+    //   });
 
-      videoPath = `/uploads/videos/${videoFileName}`; // Relative path for storing in DB
-    }
+    //   videoPath = `/uploads/videos/${videoFileName}`; // Relative path for storing in DB
+    // }
 
-    // Create the form
-    const form = await Form.create({
-      emdId: user.id,
-      name,
-      speciality,
-      hospital,
-      city,
-      image: imagePath,
-      video: videoPath,
-      status: 'Pending', // Add status field
-    });
+    // // Create the form
+    // const form = await Form.create({
+    //   emdId: user.id,
+    //   name,
+    //   speciality,
+    //   hospital,
+    //   city,
+    //   image: imagePath,
+    //   video: videoPath,
+    //   status: 'Pending', // Add status field
+    // });
 
-    // Add video to processing queue
-    if (videoPath) {
-      const videoQueue = require('../batch/queue');
-      const absoluteVideoPath = path.join(__dirname, '..', videoPath);
-      const templatePath = path.join(__dirname, '../templates/overlay.png');
+    // // Add video to processing queue
+    // if (videoPath) {
+    //   const videoQueue = require('../batch/queue');
+    //   const absoluteVideoPath = path.join(__dirname, '..', videoPath);
+    //   const templatePath = path.join(__dirname, '../templates/overlay.png');
       
-      // Ensure template exists
-      if (!fs.existsSync(templatePath)) {
-        console.error('Template file missing:', templatePath);
-        return res.status(500).json({ 
-          error: "Video processing configuration error" 
-        });
-      }
+    //   // Ensure template exists
+    //   if (!fs.existsSync(templatePath)) {
+    //     console.error('Template file missing:', templatePath);
+    //     return res.status(500).json({ 
+    //       error: "Video processing configuration error" 
+    //     });
+    //   }
 
-      await videoQueue.add('processVideo', {
-        videoId: form.id,
-        videoPath: absoluteVideoPath,
-        templatePath: templatePath,
-        text: `Dr.${name} - ${speciality} - ${hospital} - ${city}`
-      });
-    }
+    //   await videoQueue.add('processVideo', {
+    //     videoId: form.id,
+    //     videoPath: absoluteVideoPath,
+    //     templatePath: templatePath,
+    //     text: `Dr.${name} - ${speciality} - ${hospital} - ${city}`
+    //   });
+    // }
 
     // Return success response
     return res.status(201).json({ 
