@@ -7,7 +7,7 @@ const fs = require('fs');
 
 // Redis connection configuration
 const redisConfig = {
-  host: "127.0.0.1", // Replace with your Redis host (default is localhost)
+  host: "clustercfg.celagenex-redis.bbhsdn.aps1.cache.amazonaws.com", // Replace with your Redis host (default is localhost)
   port: 6379, // Replace with your Redis port (default is 6379)
 };
 
