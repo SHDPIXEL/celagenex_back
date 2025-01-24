@@ -12,13 +12,13 @@ require("./models/videos");
 
 //PORT
 const PORT = process.env.PORT || 4000;
-//const redis = new Redis(); // Defaults to localhost:6379
+const redis = new Redis(); // Defaults to localhost:6379
 
-// redis.ping().then((res) => {
-//   console.log('Redis is working:', res); // Should print "PONG"
-// }).catch((err) => {
-//   console.error('Redis connection error:', err);
-// });
+redis.ping().then((res) => {
+  console.log('Redis is working:', res); // Should print "PONG"
+}).catch((err) => {
+  console.error('Redis connection error:', err);
+});
 
 if (PORT === 4000) {
   console.error(
@@ -33,7 +33,7 @@ app.use(cors());
 const authadminRouter = require("./routes/authAdminRoutes");
 const authuserRouter = require("./routes/authUserRoutes");
 const videoRoutes = require('./routes/videoRoutes');
-//const videoWorker = require('./batch/worker');
+const videoWorker = require('./batch/worker');
 
 //user Routes
 
