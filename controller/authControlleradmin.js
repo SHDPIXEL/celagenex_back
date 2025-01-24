@@ -142,10 +142,11 @@ async function downloadData(req, res) {
       { header: 'EMD ID', key: 'emdId', width: 10 },
       { header: 'Name', key: 'name', width: 20 },
       { header: 'Speciality', key: 'speciality', width: 20 },
-      { header: 'Hospital', key: 'hospital', width: 30 },
+      { header: 'Hospital', key: 'hospital', width: 20 },
       { header: 'City', key: 'city', width: 20 },
       { header: 'Status', key: 'status', width: 15 },
-      { header: 'Video ID', key: 'videoId', width: 10 },
+      { header: 'Uploaded Video', key: 'video', width: 40 },
+      { header: 'Uploaded Image', key: 'image', width: 40 },
       { header: 'Created At', key: 'createdAt', width: 20 }
     ];
 
@@ -159,7 +160,8 @@ async function downloadData(req, res) {
         hospital: form.hospital,
         city: form.city,
         status: form.status,
-        videoId: form.id, // Using form ID as video ID since they correspond 1:1
+        video: form.video, 
+        image: form.image, 
         createdAt: form.createdAt.toISOString().split('T')[0]
       });
     });
