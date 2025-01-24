@@ -155,33 +155,33 @@ async function formSubmit(req, res) {
         fs.writeFileSync(tempFilePath, videoFile.data);
 
         // Validate video properties using temp file
-        await new Promise((resolve, reject) => {
-          videoMeta.ffprobe(tempFilePath, (err, metadata) => {
-            if (err) {
-              console.error("Error while running ffprobe:", err);
-              return reject(err);
-            }
+        // await new Promise((resolve, reject) => {
+        //   videoMeta.ffprobe(tempFilePath, (err, metadata) => {
+        //     if (err) {
+        //       console.error("Error while running ffprobe:", err);
+        //       return reject(err);
+        //     }
 
-            const { duration, size } = metadata.format;
-            const streams = metadata.streams || [];
-            const videoStream = streams.find((s) => s.codec_type === "video");
+        //     const { duration, size } = metadata.format;
+        //     const streams = metadata.streams || [];
+        //     const videoStream = streams.find((s) => s.codec_type === "video");
 
-            if (size > 100 * 1024 * 1024) {
-              return reject(new Error("Video exceeds the maximum size of 100MB."));
-            }
-            if (duration > 60) {
-              return reject(new Error("Video exceeds the maximum duration of 60 seconds."));
-            }
-            if (videoStream) {
-              const { width, height } = videoStream;
-              const ratio = width / height;
-              if (Math.abs(ratio - 16 / 9) > 0.01) {
-                return reject(new Error("Video must have an aspect ratio of 16:9."));
-              }
-            }
-            resolve();
-          });
-        });
+        //     if (size > 100 * 1024 * 1024) {
+        //       return reject(new Error("Video exceeds the maximum size of 100MB."));
+        //     }
+        //     if (duration > 60) {
+        //       return reject(new Error("Video exceeds the maximum duration of 60 seconds."));
+        //     }
+        //     if (videoStream) {
+        //       const { width, height } = videoStream;
+        //       const ratio = width / height;
+        //       if (Math.abs(ratio - 16 / 9) > 0.01) {
+        //         return reject(new Error("Video must have an aspect ratio of 16:9."));
+        //       }
+        //     }
+        //     resolve();
+        //   });
+        // });
 
         // Upload to S3 after validation
         const videoFileName = `videos/video_${Date.now()}_${user.id}.mp4`;
