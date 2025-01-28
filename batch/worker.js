@@ -52,14 +52,14 @@ const videoWorker = new Worker(
 
     const tempVideoPath = path.join(tempDir, "input.mp4");
     const tempTemplatePath = path.join(tempDir, "template.png");
-    // console.log("Raw data video:",job.data)
-    // // Debug logging
-    // console.log("Processed video:", {
-    //   videoId,
-    //   videoS3Url,
-    //   templateS3Url,
-    //   text,
-    // });
+    console.log("Raw data video:",job.data)
+    // Debug logging
+    console.log("Processed video:", {
+      videoId,
+      videoS3Url,
+      templateS3Url,
+      text,
+    });
 
     try {
       // Update form status to "Processing"
