@@ -219,7 +219,7 @@ async function formSubmit(req, res) {
     // Add video to processing queue
     if (videoPath) {
       const videoQueue = require('../batch/queue');
-      //console.log('Video path:', videoPath); // Debug log
+      console.log('Video path:', videoPath); // Debug log
 
       await videoQueue.add('processVideo', {
         videoId: form.id,
