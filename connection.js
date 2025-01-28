@@ -1,7 +1,7 @@
 const {Sequelize} = require('sequelize');
 
-const sequelize = new Sequelize('celagenex-test','celagenex_test','XkiAnT6na1CrXL8SRlgB',{
-    host: 'celagenex-test.ch26co64cgxa.ap-south-1.rds.amazonaws.com',
+const sequelize = new Sequelize('test','admin_check_cela','uaMdf5Vs6MDkx79LOnJj',{
+    host: 'celagenex-check.ch26co64cgxa.ap-south-1.rds.amazonaws.com',
     dialect: 'mysql'
 });
 
