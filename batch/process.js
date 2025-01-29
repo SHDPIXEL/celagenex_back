@@ -45,30 +45,13 @@ async function processVideo(videoPath, templatePath, text, videoId) {
     fs.mkdirSync(tempOutputDir, { recursive: true });
 
     const tempOutputPath = path.join(tempOutputDir, `processed_${videoId}.mp4`);
-    
-    // Download disclaimer image from S3 to temp directory
-    const disclaimerTempPath = path.join(tempOutputDir, 'disclaimer.jpeg');
-    
-     try {
-      console.log('Downloading disclaimer image from:', process.env.DISCLAIMER_S3_URL);
-      const response = await axios({
-        method: 'get',
-        url: process.env.DISCLAIMER_S3_URL,
-        responseType: 'arraybuffer',
-        timeout: 5000, // 5-second timeout
-      });
-    
-      await fs.promises.writeFile(disclaimerTempPath, response.data);
-    
-      // Verify the file exists and is accessible
-      if (!fs.existsSync(disclaimerTempPath)) {
-        throw new Error('Disclaimer file was not created or inaccessible');
-      }
-    
-      console.log('Disclaimer image downloaded successfully to:', disclaimerTempPath);
-    } catch (error) {
-      throw new Error(`Error downloading disclaimer image: ${error.message}. URL: ${process.env.DISCLAIMER_S3_URL}`);
+    const disclaimerPath = path.join(__dirname, "../templates/disclaimer.jpeg");
+
+    if (!fs.existsSync(disclaimerPath)) {
+      throw new Error(`Disclaimer file not found at: ${disclaimerPath}`);
     }
+    
+    console.log('Using disclaimer image from local templates folder:', disclaimerPath);
 
     const fontPath = path.join(__dirname, "../templates/font/Poppins-Bold.ttf");
     const regularFontPath = path.join(
