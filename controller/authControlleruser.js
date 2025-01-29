@@ -11,13 +11,13 @@ const os = require('os');
 const { v4: uuidv4 } = require('uuid');
 
 // Initialize S3 client
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+// const s3Client = new S3Client({
+//   region: process.env.AWS_REGION,
+//   credentials: {
+//     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+//   },
+// });
 
 // User Login Function
 async function login(req, res) {
@@ -117,93 +117,166 @@ async function formSubmit(req, res) {
     let imagePath = null;
     let videoPath = null;
 
+     // Define local storage paths
+    const imageDir = path.join(__dirname, "../uploads/images");
+    const videoDir = path.join(__dirname, "../uploads/videos");
+
+    
+      // Ensure directories exist
+      ensureDirectoryExists(imageDir);
+      ensureDirectoryExists(videoDir);
+
     // Save image to folder and validate
+    // if (imageFile) {
+    //   const allowedImageTypes = ["image/jpeg", "image/png"];
+    //   if (!allowedImageTypes.includes(imageFile.mimetype)) {
+    //     return res
+    //       .status(400)
+    //       .json({ error: "Image must be in JPEG or PNG format." });
+    //   }
+
+    //   // Process image with Sharp before uploading
+    //   const processedImageBuffer = await sharp(imageFile.data)
+    //     .jpeg({ quality: 80 })
+    //     .toBuffer();
+
+    //   const imageFileName = `images/image_${Date.now()}_${user.id}.jpg`;
+    //   await s3Client.send(new PutObjectCommand({
+    //     Bucket: process.env.AWS_S3_BUCKET,
+    //     Key: imageFileName,
+    //     Body: processedImageBuffer,
+    //     ContentType: 'image/jpeg'
+    //   }));
+
+    //   imagePath = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${imageFileName}`;
+    // }
+
+    // Save image to local storage
     if (imageFile) {
       const allowedImageTypes = ["image/jpeg", "image/png"];
       if (!allowedImageTypes.includes(imageFile.mimetype)) {
-        return res
-          .status(400)
-          .json({ error: "Image must be in JPEG or PNG format." });
+        return res.status(400).json({ error: "Image must be in JPEG or PNG format." });
       }
 
-      // Process image with Sharp before uploading
-      const processedImageBuffer = await sharp(imageFile.data)
-        .jpeg({ quality: 80 })
-        .toBuffer();
+      const imageFileName = `image_${Date.now()}_${user.id}.jpg`;
+      const imageFilePath = path.join(imageDir, imageFileName);
 
-      const imageFileName = `images/image_${Date.now()}_${user.id}.jpg`;
-      await s3Client.send(new PutObjectCommand({
-        Bucket: process.env.AWS_S3_BUCKET,
-        Key: imageFileName,
-        Body: processedImageBuffer,
-        ContentType: 'image/jpeg'
-      }));
-
-      imagePath = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${imageFileName}`;
+      // Process image with Sharp before saving
+      await sharp(imageFile.data).jpeg({ quality: 80 }).toFile(imageFilePath);
+      imagePath = `/uploads/images/${imageFileName}`;
     }
 
     // Save video to folder and validate
+    // if (videoFile) {
+    //   const allowedVideoTypes = ["video/mp4"];
+    //   if (!allowedVideoTypes.includes(videoFile.mimetype)) {
+    //     return res.status(400).json({ error: "Video must be in MP4 format." });
+    //   }
+
+    //   // Create temporary file for video validation
+    //   const tempFilePath = path.join(os.tmpdir(), `${uuidv4()}.mp4`);
+    //   try {
+    //     fs.writeFileSync(tempFilePath, videoFile.data);
+
+    //     // Validate video properties using temp file
+    //     await new Promise((resolve, reject) => {
+    //       videoMeta.ffprobe(tempFilePath, (err, metadata) => {
+    //         if (err) {
+    //           console.error("Error while running ffprobe:", err);
+    //           return reject(err);
+    //         }
+
+    //         const { duration, size } = metadata.format;
+    //         const streams = metadata.streams || [];
+    //         const videoStream = streams.find((s) => s.codec_type === "video");
+
+    //         if (size > 100 * 1024 * 1024) {
+    //           return reject(new Error("Video exceeds the maximum size of 100MB."));
+    //         }
+    //         if (duration > 60) {
+    //           return reject(new Error("Video exceeds the maximum duration of 60 seconds."));
+    //         }
+    //         if (videoStream) {
+    //           const { width, height } = videoStream;
+    //           const ratio = width / height;
+    //           if (Math.abs(ratio - 16 / 9) > 0.01) {
+    //             return reject(new Error("Video must have an aspect ratio of 16:9."));
+    //           }
+    //         }
+    //         resolve();
+    //       });
+    //     });
+
+    //     // Upload to S3 after validation
+    //     const videoFileName = `videos/video_${Date.now()}_${user.id}.mp4`;
+    //     await s3Client.send(new PutObjectCommand({
+    //       Bucket: process.env.AWS_S3_BUCKET,
+    //       Key: videoFileName,
+    //       Body: videoFile.data,
+    //       ContentType: 'video/mp4'
+    //     }));
+
+    //     videoPath = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${videoFileName}`;
+
+    //   } finally {
+    //     // Clean up: Remove temporary file
+    //     try {
+    //       fs.unlinkSync(tempFilePath);
+    //     } catch (cleanupError) {
+    //       console.error('Error cleaning up temporary file:', cleanupError);
+    //     }
+    //   }
+    // }
+
+    // Save video to local storage
     if (videoFile) {
       const allowedVideoTypes = ["video/mp4"];
       if (!allowedVideoTypes.includes(videoFile.mimetype)) {
         return res.status(400).json({ error: "Video must be in MP4 format." });
       }
 
-      // Create temporary file for video validation
+      const videoFileName = `video_${Date.now()}_${user.id}.mp4`;
+      const videoFilePath = path.join(videoDir, videoFileName);
+
+      // Create temporary file for validation
       const tempFilePath = path.join(os.tmpdir(), `${uuidv4()}.mp4`);
       try {
         fs.writeFileSync(tempFilePath, videoFile.data);
 
-        // Validate video properties using temp file
+        // Validate video properties
         await new Promise((resolve, reject) => {
           videoMeta.ffprobe(tempFilePath, (err, metadata) => {
-            if (err) {
-              console.error("Error while running ffprobe:", err);
-              return reject(err);
-            }
+            if (err) return reject(err);
 
             const { duration, size } = metadata.format;
             const streams = metadata.streams || [];
             const videoStream = streams.find((s) => s.codec_type === "video");
 
-            if (size > 100 * 1024 * 1024) {
-              return reject(new Error("Video exceeds the maximum size of 100MB."));
-            }
-            if (duration > 60) {
-              return reject(new Error("Video exceeds the maximum duration of 60 seconds."));
-            }
+            if (size > 100 * 1024 * 1024) return reject(new Error("Video exceeds 100MB."));
+            if (duration > 60) return reject(new Error("Video exceeds 60 seconds."));
             if (videoStream) {
               const { width, height } = videoStream;
               const ratio = width / height;
               if (Math.abs(ratio - 16 / 9) > 0.01) {
-                return reject(new Error("Video must have an aspect ratio of 16:9."));
+                return reject(new Error("Video must have a 16:9 aspect ratio."));
               }
             }
             resolve();
           });
         });
 
-        // Upload to S3 after validation
-        const videoFileName = `videos/video_${Date.now()}_${user.id}.mp4`;
-        await s3Client.send(new PutObjectCommand({
-          Bucket: process.env.AWS_S3_BUCKET,
-          Key: videoFileName,
-          Body: videoFile.data,
-          ContentType: 'video/mp4'
-        }));
-
-        videoPath = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${videoFileName}`;
+        // Move validated video to local storage
+        fs.renameSync(tempFilePath, videoFilePath);
+        videoPath = `/uploads/videos/${videoFileName}`;
 
       } finally {
-        // Clean up: Remove temporary file
-        try {
+        // Ensure temporary file is removed
+        if (fs.existsSync(tempFilePath)) {
           fs.unlinkSync(tempFilePath);
-        } catch (cleanupError) {
-          console.error('Error cleaning up temporary file:', cleanupError);
         }
       }
     }
-
+    
     // Create the form
     const form = await Form.create({
       emdId: user.id,
@@ -221,11 +294,18 @@ async function formSubmit(req, res) {
       const videoQueue = require('../batch/queue');
       console.log('Video path:', videoPath); // Debug log
 
-      await videoQueue.add('processVideo', {
+      // await videoQueue.add('processVideo', {
+      //   videoId: form.id,
+      //   videoS3Url: videoPath, // Changed from videoUrl to videoPath
+      //   templateS3Url: process.env.OVERLAY_S3_URL,
+      //   text: `Dr.${name} - ${speciality} - ${hospital} - ${city}`
+      // });
+
+      await videoQueue.add("processVideo", {
         videoId: form.id,
-        videoS3Url: videoPath, // Changed from videoUrl to videoPath
-        templateS3Url: process.env.OVERLAY_S3_URL,
-        text: `Dr.${name} - ${speciality} - ${hospital} - ${city}`
+        videoPath: path.join(__dirname, "..", videoPath),
+        templatePath: path.join(__dirname, "../templates/overlay.png"), // Example template path
+        text: `Dr.${name} - ${speciality} - ${hospital} - ${city}`,
       });
     }
 
