@@ -49,27 +49,22 @@ async function processVideo(videoPath, templatePath, text, videoId) {
     // Download disclaimer image from S3 to temp directory
     const disclaimerTempPath = path.join(tempOutputDir, 'disclaimer.jpeg');
     
-    try {
+     try {
       console.log('Downloading disclaimer image from:', process.env.DISCLAIMER_S3_URL);
       const response = await axios({
         method: 'get',
         url: process.env.DISCLAIMER_S3_URL,
         responseType: 'arraybuffer',
-        timeout: 5000 // 5 second timeout
+        timeout: 5000, // 5-second timeout
       });
-      
+    
       await fs.promises.writeFile(disclaimerTempPath, response.data);
-      
-      // Verify the file was created and has content
+    
+      // Verify the file exists and is accessible
       if (!fs.existsSync(disclaimerTempPath)) {
-        throw new Error('Disclaimer file was not created');
+        throw new Error('Disclaimer file was not created or inaccessible');
       }
-      
-      const stats = fs.statSync(disclaimerTempPath);
-      if (stats.size === 0) {
-        throw new Error('Disclaimer file is empty');
-      }
-      
+    
       console.log('Disclaimer image downloaded successfully to:', disclaimerTempPath);
     } catch (error) {
       throw new Error(`Error downloading disclaimer image: ${error.message}. URL: ${process.env.DISCLAIMER_S3_URL}`);
@@ -235,11 +230,13 @@ async function processVideo(videoPath, templatePath, text, videoId) {
     console.error('Error in processVideo:', error);
     throw error;
   } finally {
-    // Clean up temporary output directory
     if (tempOutputDir) {
       try {
-        fs.rmSync(tempOutputDir, { recursive: true, force: true });
-        console.log('Cleaned up temporary directory:', tempOutputDir);
+        // Delay cleanup slightly to ensure FFmpeg releases file handles
+        setTimeout(() => {
+          fs.rmSync(tempOutputDir, { recursive: true, force: true });
+          console.log('Cleaned up temporary directory:', tempOutputDir);
+        }, 1000);
       } catch (cleanupError) {
         console.error('Error cleaning up temporary output directory:', cleanupError);
       }
