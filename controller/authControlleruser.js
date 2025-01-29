@@ -19,6 +19,13 @@ const { v4: uuidv4 } = require('uuid');
 //   },
 // });
 
+// Ensure uploads directories exist
+const ensureDirectoryExists = (dir) => {
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+};
+
 // User Login Function
 async function login(req, res) {
   try {
