@@ -5,32 +5,32 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const os = require("os");
 const axios = require("axios");
 
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+// const s3Client = new S3Client({
+//   region: process.env.AWS_REGION,
+//   credentials: {
+//     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+//   },
+// });
 
-async function uploadToS3(localPath, videoId) {
-  const fileContent = fs.readFileSync(localPath);
-  const key = `processed/video_${videoId}_${Date.now()}.mp4`;
+// async function uploadToS3(localPath, videoId) {
+//   const fileContent = fs.readFileSync(localPath);
+//   const key = `processed/video_${videoId}_${Date.now()}.mp4`;
 
-  await s3Client.send(
-    new PutObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: key,
-      Body: fileContent,
-      ContentType: "video/mp4",
-    })
-  );
+//   await s3Client.send(
+//     new PutObjectCommand({
+//       Bucket: process.env.AWS_S3_BUCKET,
+//       Key: key,
+//       Body: fileContent,
+//       ContentType: "video/mp4",
+//     })
+//   );
 
-  return `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
-}
+//   return `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+// }
 
 async function processVideo(videoPath, templatePath, text, videoId) {
-  let tempOutputDir = null;
+  //let tempOutputDir = null;
   
   try {
     if (!fs.existsSync(videoPath)) {
