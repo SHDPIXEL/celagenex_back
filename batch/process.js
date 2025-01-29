@@ -40,11 +40,12 @@ async function processVideo(videoPath, templatePath, text, videoId) {
       throw new Error(`Template file not found at: ${templatePath}`);
     }
     
-    // Create temporary output directory
-    tempOutputDir = path.join(os.tmpdir(), `processed_${videoId}`);
-    fs.mkdirSync(tempOutputDir, { recursive: true });
-
-    const tempOutputPath = path.join(tempOutputDir, `processed_${videoId}.mp4`);
+    const outputDir = path.join(__dirname, '../uploads/processed');
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+  
+    const outputPath = path.join(outputDir, processed_${videoId}.mp4);
     const disclaimerPath = path.join(__dirname, "../templates/disclaimer.jpeg");
 
     if (!fs.existsSync(disclaimerPath)) {
@@ -196,35 +197,23 @@ async function processVideo(videoPath, templatePath, text, videoId) {
           })
           .on("end", () => {
             console.log("FFmpeg processing completed");
-            resolve(tempOutputPath);
+            resolve(outputPath);
           })
           .on("error", (err, stdout, stderr) => {
             console.error("FFmpeg error:", err.message);
             console.error("FFmpeg stdout:", stdout);
             reject(err);
           })
-          .save(tempOutputPath);
+          .save(outputPath);
       });
     });
     // Upload processed video to S3
-    const s3Url = await uploadToS3(tempOutputPath, videoId);
+    const s3Url = await uploadToS3(outputPath, videoId);
     return s3Url;
   } catch (error) {
     console.error('Error in processVideo:', error);
     throw error;
-  } finally {
-    if (tempOutputDir) {
-      try {
-        // Delay cleanup slightly to ensure FFmpeg releases file handles
-        setTimeout(() => {
-          fs.rmSync(tempOutputDir, { recursive: true, force: true });
-          console.log('Cleaned up temporary directory:', tempOutputDir);
-        }, 1000);
-      } catch (cleanupError) {
-        console.error('Error cleaning up temporary output directory:', cleanupError);
-      }
-    }
-  }
+  } 
 }
 
 module.exports = processVideo;
