@@ -46,7 +46,7 @@ const redisConfig = {
 const videoWorker = new Worker(
   "videoProcessing",
   async (job) => {
-    const { videoId, videoS3Url, templateS3Url, text } = job.data;
+    const { videoId, videoPath, templatePath, text } = job.data;
     // const tempDir = path.join(os.tmpdir(), uuidv4());
     // fs.mkdirSync(tempDir, { recursive: true });
 
@@ -56,8 +56,8 @@ const videoWorker = new Worker(
     // Debug logging
     console.log("Processed video:", {
       videoId,
-      videoS3Url,
-      templateS3Url,
+      videoPath,
+      templatePath,
       text,
     });
 
@@ -78,16 +78,16 @@ const videoWorker = new Worker(
 
       // Debug logging
       console.log("Processing video:", {
-        videoS3Url,
-        templateS3Url,
+        videoPath,
+        templatePath,
         text,
         videoId,
       });
 
       // Process the video
       const processedVideoS3Url = await processVideo(
-        videoS3Url,
-        templateS3Url,
+        videoPath,
+        templatePath,
         text,
         videoId
       );
