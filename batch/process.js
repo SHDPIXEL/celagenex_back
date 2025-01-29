@@ -45,7 +45,7 @@ async function processVideo(videoPath, templatePath, text, videoId) {
       fs.mkdirSync(outputDir, { recursive: true });
     }
   
-    const outputPath = path.join(outputDir, processed_${videoId}.mp4);
+    const outputPath = path.join(outputDir, `processed_${videoId}.mp4`);
     const disclaimerPath = path.join(__dirname, "../templates/disclaimer.jpeg");
 
     if (!fs.existsSync(disclaimerPath)) {
