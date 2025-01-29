@@ -88,7 +88,7 @@ async function processVideo(videoPath, templatePath, text, videoId) {
 
         ffmpeg(videoPath)
           .input(templatePath)
-          .input(disclaimerTempPath)
+          .input(disclaimerPath)
           .complexFilter([
             // Scale the template to match video dimensions
             {
