@@ -227,11 +227,11 @@ async function getPendingVideos(req, res) {
     for (const form of pendingForms) {
       if (form.video) {
         const videoQueue = require('../batch/queue');
-        console.log('Video path:', form.video); // Debug log
+        console.log('Video path:', `/var/www/back${form.video}`); // Debug log
 
       await videoQueue.add("processVideo", {
         videoId: form.id,
-        videoPath: path.join(__dirname, "..", form.video),
+        videoPath: path.join(__dirname, "..", `/var/www/back${form.video}`),
         templatePath: path.join(__dirname, "../templates/overlay.png"),
           text: `Dr.${form.name} - ${form.speciality} - ${form.hospital} - ${form.city}`,
         });
