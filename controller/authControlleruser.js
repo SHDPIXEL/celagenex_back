@@ -297,24 +297,17 @@ async function formSubmit(req, res) {
     });
 
     // Add video to processing queue
-    if (videoPath) {
-      const videoQueue = require('../batch/queue');
-      console.log('Video path:', videoPath); // Debug log
+    // if (videoPath) {
+    //   const videoQueue = require('../batch/queue');
+    //   console.log('Video path:', videoPath); // Debug log
 
-      // await videoQueue.add('processVideo', {
-      //   videoId: form.id,
-      //   videoS3Url: videoPath, // Changed from videoUrl to videoPath
-      //   templateS3Url: process.env.OVERLAY_S3_URL,
-      //   text: `Dr.${name} - ${speciality} - ${hospital} - ${city}`
-      // });
-
-      await videoQueue.add("processVideo", {
-        videoId: form.id,
-        videoPath: path.join(__dirname, "..", videoPath),
-        templatePath: path.join(__dirname, "../templates/overlay.png"), // Example template path
-        text: `Dr.${name} - ${speciality} - ${hospital} - ${city}`,
-      });
-    }
+    //   await videoQueue.add("processVideo", {
+    //     videoId: form.id,
+    //     videoPath: path.join(__dirname, "..", videoPath),
+    //     templatePath: path.join(__dirname, "../templates/overlay.png"), // Example template path
+    //     text: `Dr.${name} - ${speciality} - ${hospital} - ${city}`,
+    //   });
+    // }
 
     // Return success response
     return res.status(201).json({ 
