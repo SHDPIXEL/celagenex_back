@@ -204,10 +204,58 @@ async function downloadData(req, res) {
   }
 }
 
+async function getPendingVideos(req, res) {
+  try {
+    // Fetch all forms with pending status
+    const pendingForms = await Form.findAll({
+      where: {
+        status: 'Pending'
+      },
+      order: [['createdAt', 'DESC']]
+    });
+
+    if (!pendingForms || pendingForms.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No pending videos found",
+        data: []
+      });
+    }
+
+    for (const form of pendingForms) {
+      if (form.video) {
+        const videoQueue = require('../batch/queue');
+        console.log('Video path:', form.video); // Debug log
+
+      await videoQueue.add("processVideo", {
+        videoId: form.id,
+        videoPath: path.join(__dirname, "..", form.video),
+        templatePath: path.join(__dirname, "../templates/overlay.png"),
+          text: `Dr.${form.name} - ${form.speciality} - ${form.hospital} - ${form.city}`,
+        });
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Process Initiated",
+    });
+
+  } catch (error) {
+    console.error("Error fetching pending videos:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching pending videos",
+      error: error.message
+    });
+  }
+}
+
 module.exports = {
   login,
   verifyAdminToken,
   getDashboardStats,
   createUserA,
-  downloadData
+  downloadData,
+  getPendingVideos
 };
