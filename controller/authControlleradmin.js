@@ -157,7 +157,7 @@ async function downloadData(req, res) {
         where: { formId: form.id }
       });
 
-      const video_p = video ? `https://api.cholinationdrive.needsunleashed.com/uploads/processed/${video.video.replace('/var/www/back', '')}` : null;
+      const video_p = video ? `https://api.cholinationdrive.needsunleashed.com/${video.video.replace('/var/www/back', '')}` : null;
 
       worksheet.addRow({
         formId: form.id,
@@ -165,8 +165,8 @@ async function downloadData(req, res) {
         speciality: form.speciality,
         hospital: form.hospital,
         city: form.city,
-        video: `https://api.cholinationdrive.needsunleashed.com/uploads/videos/${form.video}`, 
-        image: `https://api.cholinationdrive.needsunleashed.com/uploads/images/${form.image}`,
+        video: `https://api.cholinationdrive.needsunleashed.com/${form.video}`, 
+        image: `https://api.cholinationdrive.needsunleashed.com/${form.image}`,
         status: form.status,
         video_p: video_p,
         createdAt: form.createdAt.toISOString().split('T')[0]
