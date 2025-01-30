@@ -5,32 +5,32 @@ const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const os = require("os");
 const axios = require("axios");
 
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
+// const s3Client = new S3Client({
+//   region: process.env.AWS_REGION,
+//   credentials: {
+//     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+//     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+//   },
+// });
 
-async function uploadToS3(localPath, videoId) {
-  const fileContent = fs.readFileSync(localPath);
-  const key = `processed/video_${videoId}_${Date.now()}.mp4`;
+// async function uploadToS3(localPath, videoId) {
+//   const fileContent = fs.readFileSync(localPath);
+//   const key = `processed/video_${videoId}_${Date.now()}.mp4`;
 
-  await s3Client.send(
-    new PutObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET,
-      Key: key,
-      Body: fileContent,
-      ContentType: "video/mp4",
-    })
-  );
+//   await s3Client.send(
+//     new PutObjectCommand({
+//       Bucket: process.env.AWS_S3_BUCKET,
+//       Key: key,
+//       Body: fileContent,
+//       ContentType: "video/mp4",
+//     })
+//   );
 
-  return `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
-}
+//   return `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+// }
 
 async function processVideo(videoPath, templatePath, text, videoId) {
-  let tempOutputDir = null;
+  //let tempOutputDir = null;
   
   try {
     if (!fs.existsSync(videoPath)) {
@@ -40,40 +40,19 @@ async function processVideo(videoPath, templatePath, text, videoId) {
       throw new Error(`Template file not found at: ${templatePath}`);
     }
     
-    // Create temporary output directory
-    tempOutputDir = path.join(os.tmpdir(), `processed_${videoId}`);
-    fs.mkdirSync(tempOutputDir, { recursive: true });
-
-    const tempOutputPath = path.join(tempOutputDir, `processed_${videoId}.mp4`);
-    
-    // Download disclaimer image from S3 to temp directory
-    const disclaimerTempPath = path.join(tempOutputDir, 'disclaimer.jpeg');
-    
-    try {
-      console.log('Downloading disclaimer image from:', process.env.DISCLAIMER_S3_URL);
-      const response = await axios({
-        method: 'get',
-        url: process.env.DISCLAIMER_S3_URL,
-        responseType: 'arraybuffer',
-        timeout: 5000 // 5 second timeout
-      });
-      
-      await fs.promises.writeFile(disclaimerTempPath, response.data);
-      
-      // Verify the file was created and has content
-      if (!fs.existsSync(disclaimerTempPath)) {
-        throw new Error('Disclaimer file was not created');
-      }
-      
-      const stats = fs.statSync(disclaimerTempPath);
-      if (stats.size === 0) {
-        throw new Error('Disclaimer file is empty');
-      }
-      
-      console.log('Disclaimer image downloaded successfully to:', disclaimerTempPath);
-    } catch (error) {
-      throw new Error(`Error downloading disclaimer image: ${error.message}. URL: ${process.env.DISCLAIMER_S3_URL}`);
+    const outputDir = path.join(__dirname, '../uploads/processed');
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
     }
+  
+    const outputPath = path.join(outputDir, `processed_${videoId}.mp4`);
+    const disclaimerPath = path.join(__dirname, "../templates/disclaimer.jpeg");
+
+    if (!fs.existsSync(disclaimerPath)) {
+      throw new Error(`Disclaimer file not found at: ${disclaimerPath}`);
+    }
+    
+    console.log('Using disclaimer image from local templates folder:', disclaimerPath);
 
     const fontPath = path.join(__dirname, "../templates/font/Poppins-Bold.ttf");
     const regularFontPath = path.join(
@@ -105,111 +84,167 @@ async function processVideo(videoPath, templatePath, text, videoId) {
         const videoStream = metadata.streams.find(
           (stream) => stream.codec_type === "video"
         );
+        const audioStream = metadata.streams.find(
+          (stream) => stream.codec_type === "audio"
+        );
         const width = videoStream.width;
         const height = videoStream.height;
 
-        ffmpeg(videoPath)
+        // Calculate font sizes based on video dimensions
+        const scaleFactor = Math.min(width / 1920, height / 1080);
+        const doctorNameSize = Math.round(40 * scaleFactor);
+        const regularTextSize = Math.round(28 * scaleFactor);
+
+        let complexFilters = [
+          // Scale the template to match video dimensions
+          {
+            filter: "scale",
+            options: `${width}:${height}`,
+            inputs: "[1:v]",
+            outputs: "[scaled]",
+          },
+          // Scale disclaimer image
+          {
+            filter: "scale",
+            options: `${width}:${height}`,
+            inputs: "[2:v]",
+            outputs: "[scaled_disclaimer]",
+          },
+          // Overlay the scaled template onto the video
+          {
+            filter: "overlay",
+            options: "0:0",
+            inputs: ["[0:v]", "[scaled]"],
+            outputs: "[v1]",
+          },
+          // Add doctor name (bold)
+          {
+            filter: "drawtext",
+            options: {
+              text: doctorName,
+              fontfile: fontPath,
+              fontcolor: "white",
+              fontsize: doctorNameSize,
+              x: "(w-text_w)/2",
+              y: `h-text_h-${Math.round(100 * scaleFactor)}`,
+            },
+            inputs: "[v1]",
+            outputs: "[v2]",
+          },
+          // Add speciality
+          {
+            filter: "drawtext",
+            options: {
+              text: speciality,
+              fontfile: regularFontPath,
+              fontcolor: "white",
+              fontsize: regularTextSize,
+              x: "(w-text_w)/2",
+              y: `h-text_h-${Math.round(70 * scaleFactor)}`,
+            },
+            inputs: "[v2]",
+            outputs: "[v3]",
+          },
+          // Add hospital
+          {
+            filter: "drawtext",
+            options: {
+              text: hospital,
+              fontfile: regularFontPath,
+              fontcolor: "white",
+              fontsize: regularTextSize,
+              x: "(w-text_w)/2",
+              y: `h-text_h-${Math.round(45 * scaleFactor)}`,
+            },
+            inputs: "[v3]",
+            outputs: "[v4]",
+          },
+          // Add city
+          {
+            filter: "drawtext",
+            options: {
+              text: city,
+              fontfile: regularFontPath,
+              fontcolor: "white",
+              fontsize: regularTextSize,
+              x: "(w-text_w)/2",
+              y: `h-text_h-${Math.round(20 * scaleFactor)}`,
+            },
+            inputs: "[v4]",
+            outputs: "[v5]",
+          },
+          // Create a 5 second loop of the disclaimer image
+          {
+            filter: "loop",
+            options: "150:1", // 5 seconds at 30fps
+            inputs: "[scaled_disclaimer]",
+            outputs: "[looped_disclaimer]",
+          },
+        ];
+
+        let ffmpegCommand = ffmpeg(videoPath)
           .input(templatePath)
-          .input(disclaimerTempPath)
-          .complexFilter([
-            // Scale the template to match video dimensions
+          .input(disclaimerPath);
+
+        if (audioStream) {
+          // If audio stream exists, add audio processing filters
+          complexFilters.push(
+            // Create silent audio for disclaimer
             {
-              filter: "scale",
-              options: `${width}:${height}`,
-              inputs: "[1:v]",
-              outputs: "[scaled]",
+              filter: "anullsrc",
+              options: "r=44100:cl=stereo",
+              outputs: "[disclaimer_audio]",
             },
-            // Scale disclaimer image
+            // Trim disclaimer audio to match video length
             {
-              filter: "scale",
-              options: `${width}:${height}`,
-              inputs: "[2:v]",
-              outputs: "[scaled_disclaimer]",
+              filter: "atrim",
+              options: "duration=5", // 5 seconds for disclaimer
+              inputs: "[disclaimer_audio]",
+              outputs: "[trimmed_disclaimer_audio]",
             },
-            // Overlay the scaled template onto the video
-            {
-              filter: "overlay",
-              options: "0:0",
-              inputs: ["[0:v]", "[scaled]"],
-              outputs: "[v1]",
-            },
-            // Add doctor name (bold)
-            {
-              filter: "drawtext",
-              options: {
-                text: doctorName,
-                fontfile: fontPath,
-                fontcolor: "white",
-                fontsize: 50,
-                x: "(w-text_w)/2",
-                y: "h-text_h-150",
-              },
-              inputs: "[v1]",
-              outputs: "[v2]",
-            },
-            // Add speciality
-            {
-              filter: "drawtext",
-              options: {
-                text: speciality,
-                fontfile: regularFontPath,
-                fontcolor: "white",
-                fontsize: 34,
-                x: "(w-text_w)/2",
-                y: "h-text_h-100",
-              },
-              inputs: "[v2]",
-              outputs: "[v3]",
-            },
-            // Add hospital
-            {
-              filter: "drawtext",
-              options: {
-                text: hospital,
-                fontfile: regularFontPath,
-                fontcolor: "white",
-                fontsize: 34,
-                x: "(w-text_w)/2",
-                y: "h-text_h-60",
-              },
-              inputs: "[v3]",
-              outputs: "[v4]",
-            },
-            // Add city
-            {
-              filter: "drawtext",
-              options: {
-                text: city,
-                fontfile: regularFontPath,
-                fontcolor: "white",
-                fontsize: 34,
-                x: "(w-text_w)/2",
-                y: "h-text_h-20",
-              },
-              inputs: "[v4]",
-              outputs: "[v5]",
-            },
-            // Create a 5 second loop of the disclaimer image
-            {
-              filter: "loop",
-              options: "150:1", // 5 seconds at 30fps
-              inputs: "[scaled_disclaimer]",
-              outputs: "[looped_disclaimer]",
-            },
-            // Concatenate video with disclaimer image
+            // Concatenate video with disclaimer image and handle audio
             {
               filter: "concat",
-              options: "n=2:v=1:a=0",
-              inputs: ["[v5]", "[looped_disclaimer]"],
-              outputs: "[outv]",
-            },
-          ])
-          .map("[outv]")
-          .outputOptions([
-            "-c:v libx264",
-            "-preset fast",
-            "-movflags +faststart",
-          ])
+              options: "n=2:v=1:a=1",
+              inputs: [
+                "[v5]", "[0:a]",           // Main video and its audio
+                "[looped_disclaimer]", "[trimmed_disclaimer_audio]" // Disclaimer video and audio
+              ],
+              outputs: ["outv", "outa"],
+            }
+          );
+
+          ffmpegCommand
+            .complexFilter(complexFilters)
+            .map("[outv]")
+            .map("[outa]")
+            .outputOptions([
+              "-c:v libx264",
+              "-c:a aac",
+              "-shortest",  // Add this to ensure audio and video lengths match
+              "-preset fast",
+              "-movflags +faststart",
+            ]);
+        } else {
+          // If no audio stream, only process video
+          complexFilters.push({
+            filter: "concat",
+            options: "n=2:v=1:a=0",
+            inputs: ["[v5]", "[looped_disclaimer]"],
+            outputs: ["outv"],
+          });
+
+          ffmpegCommand
+            .complexFilter(complexFilters)
+            .map("[outv]")
+            .outputOptions([
+              "-c:v libx264",
+              "-preset fast",
+              "-movflags +faststart",
+            ]);
+        }
+
+        ffmpegCommand
           .on("start", (commandLine) => {
             console.log("FFmpeg Start");
           })
@@ -218,33 +253,24 @@ async function processVideo(videoPath, templatePath, text, videoId) {
           })
           .on("end", () => {
             console.log("FFmpeg processing completed");
-            resolve(tempOutputPath);
+            resolve(outputPath);
           })
           .on("error", (err, stdout, stderr) => {
             console.error("FFmpeg error:", err.message);
             console.error("FFmpeg stdout:", stdout);
+            console.error("FFmpeg stderr:", stderr);
             reject(err);
           })
-          .save(tempOutputPath);
+          .save(outputPath);
       });
     });
     // Upload processed video to S3
-    const s3Url = await uploadToS3(tempOutputPath, videoId);
+    const s3Url = await uploadToS3(outputPath, videoId);
     return s3Url;
   } catch (error) {
     console.error('Error in processVideo:', error);
     throw error;
-  } finally {
-    // Clean up temporary output directory
-    if (tempOutputDir) {
-      try {
-        fs.rmSync(tempOutputDir, { recursive: true, force: true });
-        console.log('Cleaned up temporary directory:', tempOutputDir);
-      } catch (cleanupError) {
-        console.error('Error cleaning up temporary output directory:', cleanupError);
-      }
-    }
-  }
+  } 
 }
 
 module.exports = processVideo;
