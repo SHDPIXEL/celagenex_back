@@ -149,9 +149,16 @@ async function downloadData(req, res) {
       { header: 'Processed Video', key: 'video_p', width: 40 },
       { header: 'Created At', key: 'createdAt', width: 20 }
     ];
-
+    
     // Add data rows
-    forms.forEach(form => {
+    for (let form of forms) {
+      // Get the processed video based on formId from the Video model
+      const video = await Video.findOne({
+        where: { formId: form.id }
+      });
+
+      const video_p = video ? `https://api.cholinationdrive.needsunleashed.com/uploads/processed/${video.video.replace('/var/www/back', '')}` : null;
+
       worksheet.addRow({
         formId: form.id,
         name: form.name,
@@ -161,10 +168,10 @@ async function downloadData(req, res) {
         video: `https://api.cholinationdrive.needsunleashed.com/uploads/videos/${form.video}`, 
         image: `https://api.cholinationdrive.needsunleashed.com/uploads/images/${form.image}`,
         status: form.status,
-        video_p: `https://api.cholinationdrive.needsunleashed.com/uploads/processed/`,
+        video_p: video_p,
         createdAt: form.createdAt.toISOString().split('T')[0]
       });
-    });
+    }
 
     // Style the header row
     worksheet.getRow(1).font = { bold: true };
