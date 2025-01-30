@@ -139,14 +139,14 @@ async function downloadData(req, res) {
     // Define columns
     worksheet.columns = [
       { header: 'Form ID', key: 'formId', width: 10 },
-      { header: 'EMD ID', key: 'emdId', width: 10 },
       { header: 'Name', key: 'name', width: 20 },
       { header: 'Speciality', key: 'speciality', width: 20 },
       { header: 'Hospital', key: 'hospital', width: 20 },
       { header: 'City', key: 'city', width: 20 },
-      { header: 'Status', key: 'status', width: 15 },
       { header: 'Uploaded Video', key: 'video', width: 40 },
       { header: 'Uploaded Image', key: 'image', width: 40 },
+      { header: 'Status', key: 'status', width: 15 },
+      { header: 'Processed Video', key: 'video_p', width: 40 },
       { header: 'Created At', key: 'createdAt', width: 20 }
     ];
 
@@ -154,14 +154,14 @@ async function downloadData(req, res) {
     forms.forEach(form => {
       worksheet.addRow({
         formId: form.id,
-        emdId: form.emdId,
         name: form.name,
         speciality: form.speciality,
         hospital: form.hospital,
         city: form.city,
+        video: `https://api.cholinationdrive.needsunleashed.com/uploads/videos/${form.video}`, 
+        image: `https://api.cholinationdrive.needsunleashed.com/uploads/images/${form.image}`,
         status: form.status,
-        video: form.video, 
-        image: form.image, 
+        video_p: `https://api.cholinationdrive.needsunleashed.com/uploads/processed/`,
         createdAt: form.createdAt.toISOString().split('T')[0]
       });
     });
