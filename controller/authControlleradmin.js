@@ -222,6 +222,8 @@ async function getPendingVideos(req, res) {
       });
     }
 
+    console.log(pendingForms);
+
     for (const form of pendingForms) {
       if (form.video) {
         const videoQueue = require('../batch/queue');
