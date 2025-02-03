@@ -109,12 +109,10 @@ async function verifyUserToken(req, res, next) {
 async function formSubmit(req, res) {
   try {
     const user = req.user_logged;
-    // Extract form data from request body
     const { name, speciality, hospital, city } = req.body;
-    const imageFile = req.files?.image; // Assuming the frontend sends an image file with `image` key
-    const videoFile = req.files?.video; // Assuming the frontend sends a video file with `video` key
+    const imageFile = req.files?.image;
+    const videoFile = req.files?.video;
 
-    // Validate required fields
     if (!speciality || !hospital || !city) {
       return res
         .status(400)
@@ -124,39 +122,11 @@ async function formSubmit(req, res) {
     let imagePath = null;
     let videoPath = null;
 
-     // Define local storage paths
     const imageDir = path.join(__dirname, "../uploads/images");
     const videoDir = path.join(__dirname, "../uploads/videos");
 
-    
-      // Ensure directories exist
-      ensureDirectoryExists(imageDir);
-      ensureDirectoryExists(videoDir);
-
-    // Save image to folder and validate
-    // if (imageFile) {
-    //   const allowedImageTypes = ["image/jpeg", "image/png"];
-    //   if (!allowedImageTypes.includes(imageFile.mimetype)) {
-    //     return res
-    //       .status(400)
-    //       .json({ error: "Image must be in JPEG or PNG format." });
-    //   }
-
-    //   // Process image with Sharp before uploading
-    //   const processedImageBuffer = await sharp(imageFile.data)
-    //     .jpeg({ quality: 80 })
-    //     .toBuffer();
-
-    //   const imageFileName = `images/image_${Date.now()}_${user.id}.jpg`;
-    //   await s3Client.send(new PutObjectCommand({
-    //     Bucket: process.env.AWS_S3_BUCKET,
-    //     Key: imageFileName,
-    //     Body: processedImageBuffer,
-    //     ContentType: 'image/jpeg'
-    //   }));
-
-    //   imagePath = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${imageFileName}`;
-    // }
+    ensureDirectoryExists(imageDir);
+    ensureDirectoryExists(videoDir);
 
     // Save image to local storage
     if (imageFile) {
@@ -168,74 +138,11 @@ async function formSubmit(req, res) {
       const imageFileName = `image_${Date.now()}_${user.id}.jpg`;
       const imageFilePath = path.join(imageDir, imageFileName);
 
-      // Process image with Sharp before saving
       await sharp(imageFile.data).jpeg({ quality: 80 }).toFile(imageFilePath);
       imagePath = `/uploads/images/${imageFileName}`;
     }
 
-    // Save video to folder and validate
-    // if (videoFile) {
-    //   const allowedVideoTypes = ["video/mp4"];
-    //   if (!allowedVideoTypes.includes(videoFile.mimetype)) {
-    //     return res.status(400).json({ error: "Video must be in MP4 format." });
-    //   }
-
-    //   // Create temporary file for video validation
-    //   const tempFilePath = path.join(os.tmpdir(), `${uuidv4()}.mp4`);
-    //   try {
-    //     fs.writeFileSync(tempFilePath, videoFile.data);
-
-    //     // Validate video properties using temp file
-    //     await new Promise((resolve, reject) => {
-    //       videoMeta.ffprobe(tempFilePath, (err, metadata) => {
-    //         if (err) {
-    //           console.error("Error while running ffprobe:", err);
-    //           return reject(err);
-    //         }
-
-    //         const { duration, size } = metadata.format;
-    //         const streams = metadata.streams || [];
-    //         const videoStream = streams.find((s) => s.codec_type === "video");
-
-    //         if (size > 100 * 1024 * 1024) {
-    //           return reject(new Error("Video exceeds the maximum size of 100MB."));
-    //         }
-    //         if (duration > 60) {
-    //           return reject(new Error("Video exceeds the maximum duration of 60 seconds."));
-    //         }
-    //         if (videoStream) {
-    //           const { width, height } = videoStream;
-    //           const ratio = width / height;
-    //           if (Math.abs(ratio - 16 / 9) > 0.01) {
-    //             return reject(new Error("Video must have an aspect ratio of 16:9."));
-    //           }
-    //         }
-    //         resolve();
-    //       });
-    //     });
-
-    //     // Upload to S3 after validation
-    //     const videoFileName = `videos/video_${Date.now()}_${user.id}.mp4`;
-    //     await s3Client.send(new PutObjectCommand({
-    //       Bucket: process.env.AWS_S3_BUCKET,
-    //       Key: videoFileName,
-    //       Body: videoFile.data,
-    //       ContentType: 'video/mp4'
-    //     }));
-
-    //     videoPath = `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${videoFileName}`;
-
-    //   } finally {
-    //     // Clean up: Remove temporary file
-    //     try {
-    //       fs.unlinkSync(tempFilePath);
-    //     } catch (cleanupError) {
-    //       console.error('Error cleaning up temporary file:', cleanupError);
-    //     }
-    //   }
-    // }
-
-    // Save video to local storage
+    // Save and validate video
     if (videoFile) {
       const allowedVideoTypes = ["video/mp4"];
       if (!allowedVideoTypes.includes(videoFile.mimetype)) {
@@ -244,9 +151,8 @@ async function formSubmit(req, res) {
 
       const videoFileName = `video_${Date.now()}_${user.id}.mp4`;
       const videoFilePath = path.join(videoDir, videoFileName);
-
-      // Create temporary file for validation
       const tempFilePath = path.join(os.tmpdir(), `${uuidv4()}.mp4`);
+
       try {
         fs.writeFileSync(tempFilePath, videoFile.data);
 
@@ -275,16 +181,16 @@ async function formSubmit(req, res) {
         // Move validated video to local storage
         fs.renameSync(tempFilePath, videoFilePath);
         videoPath = `/uploads/videos/${videoFileName}`;
-
+      } catch (validationError) {
+        return res.status(400).json({ error: validationError.message });
       } finally {
-        // Ensure temporary file is removed
         if (fs.existsSync(tempFilePath)) {
           fs.unlinkSync(tempFilePath);
         }
       }
     }
-    
-    // Create the form
+
+    // Create form entry
     const form = await Form.create({
       emdId: user.id,
       name,
@@ -293,23 +199,9 @@ async function formSubmit(req, res) {
       city,
       image: imagePath,
       video: videoPath,
-      status: 'Pending', // Add status field
+      status: "Pending",
     });
 
-    // Add video to processing queue
-    // if (videoPath) {
-    //   const videoQueue = require('../batch/queue');
-    //   console.log('Video path:', videoPath); // Debug log
-
-    //   await videoQueue.add("processVideo", {
-    //     videoId: form.id,
-    //     videoPath: path.join(__dirname, "..", videoPath),
-    //     templatePath: path.join(__dirname, "../templates/overlay.png"), // Example template path
-    //     text: `Dr.${name} - ${speciality} - ${hospital} - ${city}`,
-    //   });
-    // }
-
-    // Return success response
     return res.status(201).json({ 
       message: "Form submitted successfully",
       status: "Video processing queued"
