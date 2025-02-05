@@ -36,7 +36,7 @@ async function getAllUsersData(req, res) {
   try {
     // Get all users with their forms
     const videos = await Videos.findAll({
-      where: { del: 0 },
+    
       order: [['createdAt', 'DESC']]
     });
 
