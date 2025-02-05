@@ -34,9 +34,11 @@ async function getFormDataByUserId(req, res) {
 
 async function getAllUsersData(req, res) {
   try {
-    // Get all users with their forms
+    // Get all videos excluding specific IDs
     const videos = await Videos.findAll({
-    
+      where: {
+        id: { [Op.notIn]: [1, 2, 3, 4, 5, 6, 7, 9, 14] } // Exclude these IDs
+      },
       order: [['createdAt', 'DESC']]
     });
 
@@ -53,6 +55,7 @@ async function getAllUsersData(req, res) {
     });
   }
 }
+
 
 module.exports = {
   getFormDataByUserId,
