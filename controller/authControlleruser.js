@@ -166,7 +166,7 @@ async function formSubmit(req, res) {
             const videoStream = streams.find((s) => s.codec_type === "video");
 
             if (size > 100 * 1024 * 1024) return reject(new Error("Video exceeds 100MB."));
-            if (duration > 60) return reject(new Error("Video exceeds 60 seconds."));
+          //  if (duration > 60) return reject(new Error("Video exceeds 60 seconds."));
             if (videoStream) {
               const { width, height } = videoStream;
               const ratio = width / height;
