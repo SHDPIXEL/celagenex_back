@@ -73,10 +73,6 @@ const Form = sequelize.define(
       type: DataTypes.ENUM('Pending', 'Processing', 'Completed', 'Failed'),
       defaultValue: 'Pending'
     },
-    del: {
-      type: DataTypes.INTEGER,
-      allowNull: false
-    },
   },
   { timestamps: true }
 );
