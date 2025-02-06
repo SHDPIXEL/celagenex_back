@@ -49,7 +49,7 @@ async function getAllUsersData(req, res) {
     // Fetch corresponding forms
     const forms = await Form.findAll({
       where: { id: formIds },
-      attributes: ['id', 'name', 'speciality', 'hospital','city'] // Fetch only required columns
+      attributes: ['id', 'name', 'hospital','city'] // Fetch only required columns
     });
 
     // Convert forms array into a key-value map for easy lookup
