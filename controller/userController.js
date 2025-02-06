@@ -35,7 +35,7 @@ async function getFormDataByUserId(req, res) {
 
 async function getAllUsersData(req, res) {
   try {
-    // Get all videos excluding specific IDs
+    // Fetch all videos excluding specific form IDs
     const videos = await Videos.findAll({
       where: {
         formId: { [Op.notIn]: [1, 2, 3, 4, 5, 6, 7, 9, 14] } // Exclude these IDs
@@ -43,9 +43,30 @@ async function getAllUsersData(req, res) {
       order: [['createdAt', 'DESC']]
     });
 
+    // Extract form IDs from videos
+    const formIds = videos.map(video => video.formId);
+
+    // Fetch corresponding forms
+    const forms = await Form.findAll({
+      where: { id: formIds },
+      attributes: ['id', 'name', 'hospital', 'speciality '] // Fetch only required columns
+    });
+
+    // Convert forms array into a key-value map for easy lookup
+    const formMap = {};
+    forms.forEach(form => {
+      formMap[form.id] = form;
+    });
+
+    // Merge video data with corresponding form data
+    const mergedData = videos.map(video => ({
+      ...video.toJSON(),
+      form: formMap[video.formId] || null // Attach form data if found, otherwise null
+    }));
+
     return res.status(200).json({
       success: true,
-      data: videos
+      data: mergedData
     });
 
   } catch (error) {
