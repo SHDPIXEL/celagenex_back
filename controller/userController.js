@@ -78,6 +78,7 @@ async function getAllUsersData(req, res) {
   }
 }
 
+
 async function searchUsersData(req, res) {
   try {
     const searchText = req.query.q; // Get search text from query params
@@ -127,10 +128,12 @@ async function searchUsersData(req, res) {
     });
 
     // Merge video data with corresponding form data
-    const mergedData = videos.map(video => ({
-      ...video.toJSON(),
-      form: formMap[video.formId] || null // Attach form data if found, otherwise null
-    }));
+    const mergedData = videos
+      .map(video => ({
+        ...video.toJSON(),
+        form: formMap[video.formId] || null // Attach form data if found, otherwise null
+      }))
+      .filter(video => video.form !== null); // Remove entries where form is null
 
     return res.status(200).json({
       success: true,
@@ -145,7 +148,6 @@ async function searchUsersData(req, res) {
     });
   }
 }
-
 
 module.exports = {
   getFormDataByUserId,
