@@ -78,8 +78,70 @@ async function getAllUsersData(req, res) {
   }
 }
 
+async function searchUsersData(req, res) {
+  try {
+    const searchText = req.query.q; // Get search text from query params
+
+    if (!searchText) {
+      return res.status(400).json({
+        success: false,
+        message: "Search query is required"
+      });
+    }
+
+    // Fetch all videos excluding specific form IDs and filter by search text
+    const videos = await Videos.findAll({
+      where: {
+        formId: { [Op.notIn]: [1, 2, 3, 4, 5, 6, 7, 9, 14] }, // Exclude these IDs
+      },
+      order: [['createdAt', 'DESC']]
+    });
+
+    // Extract form IDs from filtered videos
+    const formIds = videos.map(video => video.formId);
+
+    // Fetch corresponding forms that match the search text
+    const forms = await Form.findAll({
+      where: {
+        [Op.or]: [
+          { id: formIds }, // Fetch forms related to videos
+          { name: { [Op.like]: `%${searchText}%` } },
+          { hospital: { [Op.like]: `%${searchText}%` } },
+          { city: { [Op.like]: `%${searchText}%` } }
+        ]
+      },
+      attributes: ['id', 'name', 'hospital', 'city']
+    });
+
+    // Convert forms array into a key-value map for easy lookup
+    const formMap = {};
+    forms.forEach(form => {
+      formMap[form.id] = form;
+    });
+
+    // Merge video data with corresponding form data
+    const mergedData = videos.map(video => ({
+      ...video.toJSON(),
+      form: formMap[video.formId] || null // Attach form data if found, otherwise null
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: mergedData
+    });
+
+  } catch (error) {
+    console.error("Error searching data:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error searching data"
+    });
+  }
+}
+
 
 module.exports = {
   getFormDataByUserId,
-  getAllUsersData
+  getAllUsersData,
+  searchUsersData
 };
