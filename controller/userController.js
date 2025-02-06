@@ -89,28 +89,35 @@ async function searchUsersData(req, res) {
       });
     }
 
-    // Fetch all videos excluding specific form IDs and filter by search text
-    const videos = await Videos.findAll({
-      where: {
-        formId: { [Op.notIn]: [1, 2, 3, 4, 5, 6, 7, 9, 14] }, // Exclude these IDs
-      },
-      order: [['createdAt', 'DESC']]
-    });
-
-    // Extract form IDs from filtered videos
-    const formIds = videos.map(video => video.formId);
-
-    // Fetch corresponding forms that match the search text
+    // Fetch forms that match the search text
     const forms = await Form.findAll({
       where: {
         [Op.or]: [
-          { id: formIds }, // Fetch forms related to videos
           { name: { [Op.like]: `%${searchText}%` } },
           { hospital: { [Op.like]: `%${searchText}%` } },
           { city: { [Op.like]: `%${searchText}%` } }
         ]
       },
       attributes: ['id', 'name', 'hospital', 'city']
+    });
+
+    // Extract matching form IDs
+    const matchingFormIds = forms.map(form => form.id);
+
+    if (matchingFormIds.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: [] // No matching data found
+      });
+    }
+
+    // Fetch videos that are linked to the matching form IDs
+    const videos = await Videos.findAll({
+      where: {
+        formId: { [Op.in]: matchingFormIds }, // Only fetch videos related to found forms
+        formId: { [Op.notIn]: [1, 2, 3, 4, 5, 6, 7, 9, 14] } // Exclude specific IDs
+      },
+      order: [['createdAt', 'DESC']]
     });
 
     // Convert forms array into a key-value map for easy lookup
