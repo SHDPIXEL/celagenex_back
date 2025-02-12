@@ -116,7 +116,7 @@ async function searchUsersData(req, res) {
     const videos = await Videos.findAll({
       where: {
         formId: { [Op.in]: matchingFormIds }, // Only fetch videos related to found forms
-        formId: { [Op.notIn]: [1, 2, 3, 4, 5, 6, 7, 9, 14] } // Exclude specific IDs
+        formId: { [Op.notIn]: [1, 2, 3, 4, 5, 6, 7, 9, 14, 220, 244, 245, 246, 249, 250] } // Exclude specific IDs
       },
       order: [['createdAt', 'DESC']]
     });
