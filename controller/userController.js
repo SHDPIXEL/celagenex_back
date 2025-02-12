@@ -38,7 +38,7 @@ async function getAllUsersData(req, res) {
     // Fetch all videos excluding specific form IDs
     const videos = await Videos.findAll({
       where: {
-        formId: { [Op.notIn]: [1, 2, 3, 4, 5, 6, 7, 9, 14, 220, 244, 2455, 246, 249] } // Exclude these IDs
+        formId: { [Op.notIn]: [1, 2, 3, 4, 5, 6, 7, 9, 14, 220, 244, 245, 246, 249, 250] } // Exclude these IDs
       },
       order: [['createdAt', 'DESC']]
     });
