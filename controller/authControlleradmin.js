@@ -208,19 +208,19 @@ async function downloadData(req, res) {
 async function getPendingVideos(req, res) {
   try {
     // Fetch all forms with pending status
-    // const pendingForms = await Form.findAll({
-    //   where: {
-    //     status: 'Pending'
-    //   },
-    //   order: [['createdAt', 'DESC']]
-    // });
-
     const pendingForms = await Form.findAll({
       where: {
-        id: 250
+        status: 'Pending'
       },
       order: [['createdAt', 'DESC']]
     });
+
+    // const pendingForms = await Form.findAll({
+    //   where: {
+    //     id: 250
+    //   },
+    //   order: [['createdAt', 'DESC']]
+    // });
 
 
     if (!pendingForms || pendingForms.length === 0) {
