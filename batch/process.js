@@ -92,8 +92,8 @@ async function processVideo(videoPath, templatePath, text, videoId) {
 
         // Calculate font sizes based on video dimensions
         const scaleFactor = Math.min(width / 1920, height / 1080);
-        const doctorNameSize = Math.round(40 * scaleFactor);
-        const regularTextSize = Math.round(28 * scaleFactor);
+        const doctorNameSize = Math.round(45 * scaleFactor);
+        const regularTextSize = Math.round(33 * scaleFactor);
 
         let complexFilters = [
           // Scale the template to match video dimensions
@@ -126,7 +126,7 @@ async function processVideo(videoPath, templatePath, text, videoId) {
               fontcolor: "white",
               fontsize: doctorNameSize,
               x: "(w-text_w)/2",
-              y: `h-text_h-${Math.round(160 * scaleFactor)}`,
+              y: `h-text_h-${Math.round(150 * scaleFactor)}`,
             },
             inputs: "[v1]",
             outputs: "[v2]",
@@ -140,7 +140,7 @@ async function processVideo(videoPath, templatePath, text, videoId) {
               fontcolor: "white",
               fontsize: regularTextSize,
               x: "(w-text_w)/2",
-              y: `h-text_h-${Math.round(120 * scaleFactor)}`,
+              y: `h-text_h-${Math.round(110 * scaleFactor)}`,
             },
             inputs: "[v2]",
             outputs: "[v3]",
@@ -154,7 +154,7 @@ async function processVideo(videoPath, templatePath, text, videoId) {
               fontcolor: "white",
               fontsize: regularTextSize,
               x: "(w-text_w)/2",
-              y: `h-text_h-${Math.round(85 * scaleFactor)}`,
+              y: `h-text_h-${Math.round(75 * scaleFactor)}`,
             },
             inputs: "[v3]",
             outputs: "[v4]",
@@ -168,7 +168,7 @@ async function processVideo(videoPath, templatePath, text, videoId) {
               fontcolor: "white",
               fontsize: regularTextSize,
               x: "(w-text_w)/2",
-              y: `h-text_h-${Math.round(55 * scaleFactor)}`,
+              y: `h-text_h-${Math.round(45 * scaleFactor)}`,
             },
             inputs: "[v4]",
             outputs: "[v5]",
