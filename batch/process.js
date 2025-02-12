@@ -168,7 +168,7 @@ async function processVideo(videoPath, templatePath, text, videoId) {
               fontcolor: "white",
               fontsize: regularTextSize,
               x: "(w-text_w)/2",
-              y: `h-text_h-${Math.round(35 * scaleFactor)}`,
+              y: `h-text_h-${Math.round(25 * scaleFactor)}`,
             },
             inputs: "[v4]",
             outputs: "[v5]",
