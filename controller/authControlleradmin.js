@@ -134,12 +134,20 @@ async function downloadData(req, res) {
 
     // Get all forms
     const forms = await Form.findAll({
-      order: [['createdAt', 'DESC']]
+      order: [['createdAt', 'DESC']],
+      include: [
+        {
+          model: User,
+          as: 'user', // Ensure this matches the alias in your associations
+          attributes: ['emp_code']
+        }
+      ]
     });
 
     // Define columns
     worksheet.columns = [
       { header: 'Form ID', key: 'formId', width: 10 },
+      { header: 'Employee ID', key: 'empId', width: 15 },
       { header: 'Name', key: 'name', width: 20 },
       { header: 'Speciality', key: 'speciality', width: 20 },
       { header: 'Hospital', key: 'hospital', width: 20 },
@@ -162,6 +170,7 @@ async function downloadData(req, res) {
 
       worksheet.addRow({
         formId: form.id,
+        empId: form.user ? form.user.emp_code : 'N/A',
         name: form.name,
         speciality: form.speciality,
         hospital: form.hospital,
