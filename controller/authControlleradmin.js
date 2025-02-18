@@ -134,15 +134,23 @@ async function downloadData(req, res) {
 
     // Get all forms
     const forms = await Form.findAll({
-      order: [['createdAt', 'DESC']],
-      include: [
-        {
-          model: User,
-          as: 'user', // Ensure this matches the alias in your associations
-          attributes: ['emp_code']
-        }
-      ]
+      order: [['createdAt', 'DESC']]
     });
+
+    // Extract all emdIds from forms
+    const emdIds = forms.map(form => form.emdId);
+
+    // Fetch users based on emdIds
+    const users = await User.findAll({
+      where: { id: emdIds },
+      attributes: ['id', 'emp_code']
+    });
+
+    // Create a mapping of user ID to emp_code
+    const userMap = users.reduce((acc, user) => {
+      acc[user.id] = user.emp_code;
+      return acc;
+    }, {});
 
     // Define columns
     worksheet.columns = [
@@ -170,7 +178,7 @@ async function downloadData(req, res) {
 
       worksheet.addRow({
         formId: form.id,
-        empId: form.user ? form.user.emp_code : 'N/A',
+        empId: userMap[form.emdId] || 'N/A',
         name: form.name,
         speciality: form.speciality,
         hospital: form.hospital,
