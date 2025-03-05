@@ -5,7 +5,7 @@ const { getFormDataByUserId, getAllUsersData,searchUsersData } = require('../con
 
 router.post('/login', login);
 router.post('/formsubmit',verifyUserToken, formSubmit);
-router.get('/getAllVideos',verifyUserToken, getAllUsersData);
+router.get('/getAllVideos',getAllUsersData);
 router.get('/getFormDataByUserId/:userId',verifyUserToken, getFormDataByUserId);
 router.get('/searchVideos',verifyUserToken, searchUsersData);
 
