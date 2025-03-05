@@ -7,6 +7,6 @@ router.post('/login', login);
 router.post('/formsubmit',verifyUserToken, formSubmit);
 router.get('/getAllVideos',getAllUsersData);
 router.get('/getFormDataByUserId/:userId',verifyUserToken, getFormDataByUserId);
-router.get('/searchVideos',verifyUserToken, searchUsersData);
+router.get('/searchVideos', searchUsersData);
 
 module.exports = router;
