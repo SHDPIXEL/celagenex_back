@@ -65,8 +65,15 @@ async function getAllUsersData(req, res) {
     limit = parseInt(limit) || 9; // Default to 10 records per page
     const offset = (page - 1) * limit;
 
-    // Fetch total count of all videos (without filtering)
-    const allVideosCount = await Videos.count();
+
+    // Fetch total count of all videos (excluding specific form IDs)
+    const allVideosCount = await Videos.count({
+      where: {
+        formId: {
+          [Op.notIn]: COMMON_VALUES,
+        },
+      },
+    });
 
     // Fetch total count of videos (excluding specific form IDs)
     const totalCount = await Videos.count({
